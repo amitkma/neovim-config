@@ -74,3 +74,16 @@ end)
 vim.keymap.set("n", "<leader><leader>", function()
   vim.cmd "so"
 end)
+
+-- sets window size = ideal size for 2 buffers and 2 terms
+vim.keymap.set("n", "<C-w>.", "<C-w>=z12<CR>")
+
+-- for moving around windows
+vim.keymap.set("n", "<leader>h", "<C-W><C-H>")
+vim.keymap.set("n", "<leader>j", "<C-W><C-J>")
+vim.keymap.set("n", "<leader>k", "<C-W><C-K>")
+vim.keymap.set("n", "<leader>l", "<C-W><C-L>")
+
+-- git diff
+vim.keymap.set("n", "<leader>oo", "<cmd>DiffviewOpen<cr>")
+vim.keymap.set("n", "<leader>oc", "<cmd>DiffviewClose<cr>")
