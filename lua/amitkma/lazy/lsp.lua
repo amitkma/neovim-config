@@ -97,8 +97,10 @@ return {
         taplo = true,
         intelephense = true,
 
-        pyright = true,
-        ruff = { manual_install = true },
+        pyright = {
+          settings = { pyright = { disableOrganizeImports = true }, python = { analysis = { ignore = { "*" } } } },
+        },
+        ruff = { manual_install = true, settings = { fix = true } },
         -- mojo = { manual_install = true },
 
         -- Enabled biome formatting, turn off all the other ones generally
