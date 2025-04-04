@@ -1,61 +1,69 @@
 local M = {}
 
-local builtin = require "el.builtin"
-local extensions = require "el.extensions"
-local subscribe = require "el.subscribe"
-local sections = require "el.sections"
+function M.setup()
+  local icon = require "amitkma.icons"
+  local lualine = require "lualine"
 
-vim.opt.laststatus = 3
+  local filetype = { "filetype", icon_only = false }
 
-M.setup = function()
-  require("el").setup {
-    generator = function()
-      local segments = {}
+  local lsp_status = {
+    "lsp_status",
+    icon = "", -- f013
+    symbols = {
+      spinner = icon.spinner,
+      done = false,
+      separator = " ",
+    },
+    -- List of LSP names to ignore (e.g., `null-ls`):
+    ignore_lsp = {},
+  }
 
-      table.insert(segments, extensions.mode)
-      table.insert(segments, " ")
-      table.insert(
-        segments,
-        subscribe.buf_autocmd("el-git-branch", "BufEnter", function(win, buf)
-          local branch = extensions.git_branch(win, buf)
-          if branch then
-            return branch
-          end
-        end)
-      )
-      table.insert(
-        segments,
-        subscribe.buf_autocmd("el-git-changes", "BufWritePost", function(win, buf)
-          local changes = extensions.git_changes(win, buf)
-          if changes then
-            return changes
-          end
-        end)
-      )
-      table.insert(segments, function()
-        local task_count = #require("misery.scheduler").tasks
-        if task_count == 0 then
-          return ""
-        else
-          return string.format(" (Queued Events: %d)", task_count)
-        end
-      end)
-      table.insert(segments, sections.split)
-      table.insert(segments, "%f")
-      table.insert(segments, builtin.modified)
-      table.insert(segments, sections.split)
-      table.insert(segments, builtin.filetype)
-      table.insert(segments, "[")
-      table.insert(segments, builtin.line_with_width(3))
-      table.insert(segments, ":")
-      table.insert(segments, builtin.column_with_width(2))
-      table.insert(segments, "]")
+  local diagnostics = {
+    "diagnostics",
+    sources = { "nvim_diagnostic" },
+    sections = { "error", "warn", "info", "hint" },
+    symbols = {
+      error = icon.diagnostics.Error,
+      hint = icon.diagnostics.Hint,
+      info = icon.diagnostics.Info,
+      warn = icon.diagnostics.Warning,
+    },
+    colored = true,
+    update_in_insert = false,
+    always_visible = false,
+  }
 
-      return segments
+  local nvimbattery = {
+    function()
+      return require("battery").get_status_line()
     end,
   }
-end
 
-M.setup()
+  lualine.setup {
+    options = {
+      theme = "auto",
+      globalstatus = true,
+      section_separators = { left = "", right = "" },
+      component_separators = { left = "", right = "" },
+      disabled_filetypes = { statusline = { "dashboard", "lazy", "alpha" } },
+    },
+    sections = {
+      lualine_a = { "mode" },
+      lualine_b = { "branch" },
+      lualine_c = { "filename", lsp_status },
+      lualine_x = { "diff", diagnostics, filetype },
+      lualine_y = { "progress" },
+      lualine_z = { "location", nvimbattery },
+    },
+    winbar = {
+      lualine_a = {},
+      lualine_b = { { "filetype", icon_only = true } },
+      lualine_c = { { "filename", path = 3 } },
+      lualine_x = {},
+      lualine_y = {},
+      lualine_z = { "datetime" },
+    },
+  }
+end
 
 return M
