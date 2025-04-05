@@ -31,7 +31,12 @@ require("tailwindcss-colorizer-cmp").setup {
   color_square_width = 2,
 }
 
+-- If you want insert `(` after select function or method item
+local cmp_autopairs = require "nvim-autopairs.completion.cmp"
 local cmp = require "cmp"
+cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
+
+local luasnip = require "luasnip"
 
 cmp.setup {
   sources = {
@@ -46,15 +51,39 @@ cmp.setup {
     { name = "buffer" },
   },
   mapping = {
-    ["<C-n>"] = cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Insert },
-    ["<C-p>"] = cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Insert },
-    ["<C-y>"] = cmp.mapping(
-      cmp.mapping.confirm {
-        behavior = cmp.ConfirmBehavior.Insert,
-        select = true,
-      },
-      { "i", "c" }
-    ),
+    ["<CR>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        if luasnip.expandable() then
+          luasnip.expand()
+        else
+          cmp.confirm {
+            select = true,
+          }
+        end
+      else
+        fallback()
+      end
+    end),
+
+    ["<Tab>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_next_item()
+      elseif luasnip.locally_jumpable(1) then
+        luasnip.jump(1)
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
+
+    ["<S-Tab>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      elseif luasnip.locally_jumpable(-1) then
+        luasnip.jump(-1)
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
   },
 
   -- Enable luasnip to handle snippet expansion for nvim-cmp
@@ -98,8 +127,8 @@ cmp.setup {
     -- TODO: I don't like this at all for completion window, it takes up way too much space.
     --  However, I think the docs one could be OK, but I need to fix the highlights for it
     --
-    -- completion = cmp.config.window.bordered(),
-    -- documentation = cmp.config.window.bordered(),
+    completion = cmp.config.window.bordered(),
+    documentation = cmp.config.window.bordered(),
   },
 }
 
