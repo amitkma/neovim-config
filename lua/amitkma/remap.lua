@@ -87,3 +87,44 @@ vim.keymap.set("n", "<leader>l", "<C-W><C-L>")
 -- git diff
 vim.keymap.set("n", "<leader>oo", "<cmd>DiffviewOpen<cr>")
 vim.keymap.set("n", "<leader>oc", "<cmd>DiffviewClose<cr>")
+
+-- Run python django tests
+local test_runner = require "amitkma.test_runner"
+vim.keymap.set("n", "<leader>tf", function()
+  local word = vim.fn.expand "<cword>"
+  local test_cmd = ""
+
+  -- Check if manage.py exists in the current or parent directories
+  if vim.fn.filereadable "manage.py" == 1 or vim.fn.findfile("manage.py", ".;") ~= "" then
+    test_cmd = "python manage.py test -k " .. word
+  else
+    test_cmd = "pytest -k " .. word
+  end
+  test_runner.run_test_command(test_cmd, "Running test " .. word .. " ...", "Test passed", "Test failed")
+end, { desc = "Run test under cursor (project-aware)", noremap = true })
+
+vim.keymap.set("n", "<leader>tc", function()
+  local word = vim.fn.expand "<cword>" -- assumes cursor is on class name
+  local file_path = vim.fn.expand "%:p"
+  local rel_path = vim.fn.fnamemodify(file_path, ":.")
+  local module_name = rel_path:gsub("/", "."):gsub("%.py$", "")
+
+  local test_cmd = ""
+
+  if vim.fn.filereadable "manage.py" == 1 or vim.fn.findfile("manage.py", ".;") ~= "" then
+    test_cmd = "python manage.py test " .. module_name .. "." .. word
+  else
+    test_cmd = "pytest " .. rel_path .. "::" .. word
+  end
+  test_runner.run_test_command(
+    test_cmd,
+    "Running module " .. module_name .. " tests...",
+    "Module tests passed",
+    "Module tests failed"
+  )
+end, { desc = "Run test class under cursor", noremap = true })
+
+vim.keymap.set("n", "<leader>ta", function()
+  local test_cmd = "make -f execute_tests.mk"
+  test_runner.run_test_command(test_cmd, "Running all tests...", "All tests passed", "Some or all tests failed")
+end, { desc = "Run test class under cursor", noremap = true })
